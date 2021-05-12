@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const User = require("../models/User");
+const Profile = require("../models/Profile");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth");
@@ -35,20 +36,16 @@ router.post(
       const { email, password, first_name, last_name, mobile, roleId } =
         req.body;
       //check if user sent the emailid and password without using express-validator
-      // if (!email || !password || !first_name || !last_name || !mobile)
-      //   return res
-      //     .status(400)
-      //     .json({ errorMessage: "Please enter all required fields" });
+      // if (!email || !password || !first_name || !last_name || !mobile) return res.status(400).json({ errorMessage: "Please enter all required fields" });
       //check if password is atleast 6 characters long
-      // if (password.length < 6)
-      //   return res.status(400).json({
-      //     errorMessage: "Please enter a password of atleast 6 characters",
-      //   });
+      // if (password.length < 6)return res.status(400).json({errorMessage: "Please enter a password of atleast 6 characters",});
       //check if there is already an account with this email
-      const existingUser = await User.findOne({ email });
+      const existingUser = await User.findOne({
+        $or: [{ email }, { mobile }],
+      });
       if (existingUser)
         return res.status(400).json({
-          errorMessage: "An account with this email already exists",
+          errorMessage: "An account with this email or mobile already exists",
         });
       //hash the password
       const salt = await bcrypt.genSalt();
@@ -126,6 +123,7 @@ router.post(
           .json({ errorMessage: "wrong email or password" });
       //now that email and pwd are correct sign the tokent and sent it with the cookie
       await existingUser.populate("roleId").execPopulate();
+      //define payload sent in token and with the res object too
       const user = {
         first_name: existingUser.first_name,
         last_name: existingUser.last_name,
@@ -180,7 +178,7 @@ router.get("/logout", auth, (req, res) => {
         httpOnly: true,
         expires: new Date(0), //cookie expired in the past so the browser will remove the cookie
       })
-      .send();
+      .json({ status: true });
   } catch (err) {
     // console.log(err);
     res.status(500).json({
@@ -217,7 +215,6 @@ router.patch(
     try {
       //validate phone
       if (req.body.mobile) {
-        console.log("hello");
         const ph = phone(req.mobile, "IN");
         if (!ph[0]) {
           return res.status(400).json({
@@ -260,7 +257,9 @@ router.delete(
   (req, res, next) => auth(req, res, next, "user-remove"),
   async (req, res) => {
     try {
-      await User.findByIdAndDelete(req.params.id);
+      const id = req.params.id;
+      await User.findByIdAndDelete(id);
+      await Profile.deleteOne({ userId: id }); //delete profile related with the user
       res.json({
         status: true,
       });

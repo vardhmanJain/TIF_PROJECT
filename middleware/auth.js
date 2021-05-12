@@ -10,12 +10,11 @@ async function auth(req, res, next, scope) {
     if (scope != null && !verified.user.role.scopes.includes(scope))
       throw "this user doesent have the required scope";
     req.user = verified.user;
-
     next();
   } catch (err) {
-    console.error(err);
     res.status(401).json({
-      errorMessage: "Unauthorized",
+      status: false,
+      errors: [{ message: "unauthorised" }],
     });
   }
 }

@@ -18,7 +18,7 @@ router.post(
       await newRole.save();
       res.json({ status: true });
     } catch (err) {
-      res.send(500).json({
+      res.status(500).json({
         status: false,
         errors: [{ message: "something went wrong" }],
       });
@@ -38,7 +38,7 @@ router.get(
       });
     } catch (err) {
       // console.log(err);
-      res.send(500).json({
+      res.status(500).json({
         status: false,
         errors: [{ message: "something went wrong" }],
       });
@@ -67,7 +67,7 @@ router.patch(
       res.json({ status: true });
     } catch (err) {
       // console.log(err);
-      res.send(500).json({
+      res.status(500).json({
         status: false,
         errors: [{ message: "something went wrong" }],
       });

@@ -28,7 +28,7 @@ router.post(
       await newProfile.save();
       res.json({ status: true });
     } catch (err) {
-      // console.log(err);
+      console.log(err);
       res.status(500).json({
         status: false,
         errors: [{ message: "something went wrong" }],

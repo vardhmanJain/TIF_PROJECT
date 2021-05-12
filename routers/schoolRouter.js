@@ -52,7 +52,7 @@ router.get(
       });
     } catch (err) {
       // console.log(err);
-      res.send(500).json({
+      res.status(500).json({
         status: false,
         errors: [{ message: "something went wrong" }],
       });
@@ -75,7 +75,7 @@ router.patch(
       res.json({ status: true });
     } catch (err) {
       // console.log(err);
-      res.send(500).json({
+      res.status(500).json({
         status: false,
         errors: [{ message: "something went wrong" }],
       });
@@ -89,11 +89,9 @@ router.get(
   async (req, res) => {
     try {
       const id = req.params.id;
-
       const { public_id, name, city, state, country } = await School.findById(
         id
       );
-
       const students = await Profile.find({ schoolId: id }, [
         "-created",
         "-updated",
