@@ -9,10 +9,9 @@ const phone = require("phone");
 router.post(
   "/signup",
   body("email", "please enter a valid email").isEmail(),
-  body("password").isLength(
-    { min: 8 },
-    "password must be atleast 8 characters"
-  ),
+  body("password", "password must be atleast 8 characters long").isLength({
+    min: 8,
+  }),
   body("first_name", "first name is required").exists(),
   body("last_name", "last name is required").exists(),
   body("mobile", "mobile is required").exists(),
@@ -35,7 +34,7 @@ router.post(
       }
       const { email, password, first_name, last_name, mobile, roleId } =
         req.body;
-      //check if user sent the emailid and password
+      //check if user sent the emailid and password without using express-validator
       // if (!email || !password || !first_name || !last_name || !mobile)
       //   return res
       //     .status(400)
@@ -64,7 +63,7 @@ router.post(
         roleId,
       });
       const savedUser = await newUser.save();
-      await savedUser.populate("roleId").execPopulate();
+      await savedUser.populate("roleId").execPopulate(); //populate the roleId fileld in user documetnt so that scope verification becomes easier
       //jwt is used for representing secure claims between two parties
       //jwt token = header.payload.verify-signature
       const token = jwt.sign(
@@ -89,8 +88,11 @@ router.post(
         })
         .json({ status: true });
     } catch (err) {
-      console.error(err);
-      res.status(500).send();
+      console.log(err);
+      res.status(500).json({
+        status: false,
+        errors: [{ message: "something went wrong" }],
+      });
     }
   }
 );
@@ -108,11 +110,6 @@ router.post(
         return res.status(400).json({ errors: errors.array() });
       }
       const { email, password } = req.body;
-      if (!email || !password)
-        return res
-          .status(400)
-          .json({ errorMessage: "Please enter all required fields" });
-
       const existingUser = await User.findOne({ email });
       if (!existingUser)
         return res
@@ -129,30 +126,29 @@ router.post(
           .json({ errorMessage: "wrong email or password" });
       //now that email and pwd are correct sign the tokent and sent it with the cookie
       await existingUser.populate("roleId").execPopulate();
-      const token = jwt.sign(
-        {
-          user: {
-            first_name: existingUser.first_name,
-            last_name: existingUser.last_name,
-            id: existingUser._id,
-            email,
-            mobile: existingUser.mobile,
-            created: existingUser.created,
-            updated: existingUser.updated,
-            role: existingUser.roleId,
-          },
-        },
-        process.env.JWT_SECRET
-      );
+      const user = {
+        first_name: existingUser.first_name,
+        last_name: existingUser.last_name,
+        id: existingUser._id,
+        email,
+        mobile: existingUser.mobile,
+        created: existingUser.created,
+        updated: existingUser.updated,
+        role: existingUser.roleId,
+      };
+      const token = jwt.sign({ user }, process.env.JWT_SECRET);
       //send the token in a HTTP-only cookie so it is not read by js
       res
         .cookie("token", token, {
           httpOnly: true,
         })
-        .send();
+        .json({ status: true, data: user, token });
     } catch (err) {
-      console.error(err);
-      res.status(500).send();
+      // console.log(err);
+      res.status(500).json({
+        status: false,
+        errors: [{ message: "something went wrong" }],
+      });
     }
   }
 );
@@ -162,13 +158,13 @@ router.get(
   (req, res, next) => auth(req, res, next, "user-get"),
   async (req, res) => {
     try {
-      const users = await User.find();
+      const users = await User.find({}, "-passwordHash");
       res.json({
         status: true,
         data: users,
       });
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       res.status(500).json({
         status: false,
         errors: [{ message: "something went wrong" }],
@@ -186,7 +182,7 @@ router.get("/logout", auth, (req, res) => {
       })
       .send();
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     res.status(500).json({
       status: false,
       errors: [{ message: "something went wrong" }],
@@ -194,51 +190,88 @@ router.get("/logout", auth, (req, res) => {
   }
 });
 //------------get a single user------user-get----
-router.get("/:id", auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    res.json({
-      status: true,
-      data: user,
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({
-      status: false,
-      errors: [{ message: "something went wrong" }],
-    });
+router.get(
+  "/:id",
+  (req, res, next) => auth(req, res, next, "user-get"),
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id, "-passwordHash");
+      res.json({
+        status: true,
+        data: user,
+      });
+    } catch (err) {
+      // console.log(err);
+      res.status(500).json({
+        status: false,
+        errors: [{ message: "something went wrong" }],
+      });
+    }
   }
-});
+);
 //-------------edit user-------user-edit---
-router.patch("/:id", auth, async (req, res) => {
-  try {
-    const id = req.params.id;
-    await User.findByIdAndUpdate(id, { ...req.body });
-    res.json({
-      status: true,
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({
-      status: false,
-      errors: [{ message: "something went wrong" }],
-    });
+router.patch(
+  "/:id",
+  (req, res, next) => auth(req, res, next, "user-edit"),
+  async (req, res) => {
+    try {
+      //validate phone
+      if (req.body.mobile) {
+        console.log("hello");
+        const ph = phone(req.mobile, "IN");
+        if (!ph[0]) {
+          return res.status(400).json({
+            status: false,
+            errors: [
+              { message: "enter a valid mobile number starting with +91" },
+            ],
+          });
+        }
+      }
+      //hash password before updating
+      if (req.body.password) {
+        const salt = await bcrypt.genSalt();
+        const passwordHash = await bcrypt.hash(req.body.password, salt);
+        req.body.passwordHash = passwordHash;
+      }
+      const id = req.params.id;
+      const updated = Date.now();
+      //update user
+      await User.findByIdAndUpdate(
+        id,
+        { ...req.body, updated },
+        { runValidators: true }
+      );
+      res.json({
+        status: true,
+      });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({
+        status: false,
+        errors: [{ message: "something went wrong" }],
+      });
+    }
   }
-});
+);
 //------------remove user--------user-remove--------
-router.delete("/:id", auth, async (req, res) => {
-  try {
-    await User.findByIdAndDelete(req.params.id);
-    res.json({
-      status: true,
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({
-      status: false,
-      errors: [{ message: "something went wrong" }],
-    });
+router.delete(
+  "/:id",
+  (req, res, next) => auth(req, res, next, "user-remove"),
+  async (req, res) => {
+    try {
+      await User.findByIdAndDelete(req.params.id);
+      res.json({
+        status: true,
+      });
+    } catch (err) {
+      // console.log(err);
+      res.status(500).json({
+        status: false,
+        errors: [{ message: "something went wrong" }],
+      });
+    }
   }
-});
+);
 
 module.exports = router;

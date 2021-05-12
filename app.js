@@ -18,13 +18,11 @@ app.listen(PORT, () => {
 app.use(express.json()); //use express.json() middleware for all incoming requests
 app.use(cookieParser()); //this middleware will parse the cookies to req.cookies
 
-//routes
+//test routes
 app.get("/test", (req, res) => {
   res.send("hello tehre");
 });
 
-//theinternetfolks
-//mongodb+srv://tif:<password>@cluster0.4clmc.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
 //connect to mongodb
 mongoose.connect(
   process.env.MDB_CONNECT,
@@ -40,7 +38,6 @@ mongoose.connect(
 //setup routes
 
 app.use("/user", userRouter); //use this middleware for requests to /user
-app.use("/school", schoolRouter); //use this middleware for requests to /user
-app.use("/role", roleRouter); //use this middleware for requests to /user
-app.use("/profile", profileRouter); //use this middleware for requests to /user
-app.use("/customer", require("./routers/customerRouter"));
+app.use("/school", schoolRouter); //use this middleware for requests to /school
+app.use("/role", roleRouter); //use this middleware for requests to /role
+app.use("/profile", profileRouter); //use this middleware for requests to /profile

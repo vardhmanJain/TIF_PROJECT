@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const userSchema = new mongoose.Schema({
   first_name: {
     type: String,
@@ -33,9 +34,14 @@ const userSchema = new mongoose.Schema({
   },
   updated: {
     type: Date,
-    default: null,
+    default: Date.now(),
   },
 });
-
+// userSchema.pre("findOneAndUpdate", async (next) => {
+//   const salt = await bcrypt.genSalt();
+//   console.log(this);
+//   this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
+//   next();
+// });
 const User = mongoose.model("user", userSchema);
 module.exports = User;

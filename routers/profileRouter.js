@@ -1,9 +1,11 @@
 const Profile = require("../models/Profile");
 const { body, validationResult } = require("express-validator");
 const router = require("express").Router();
+const auth = require("../middleware/auth");
 //------------create a new profile---------profile-create--------
 router.post(
   "/",
+  (req, res, next) => auth(req, res, next, "profile-create"),
   body("first_name", "first name is required").exists(),
   body("last_name", "last name is required").exists(),
   body("userId", "user id is required").exists(),
@@ -26,7 +28,7 @@ router.post(
       await newProfile.save();
       res.json({ status: true });
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       res.status(500).json({
         status: false,
         errors: [{ message: "something went wrong" }],
@@ -35,19 +37,23 @@ router.post(
   }
 );
 //------------get all profiles---------profile-get------
-router.get("/", async (req, res) => {
-  try {
-    const profiles = await Profile.find();
-    res.json({
-      status: true,
-      data: profiles,
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({
-      status: false,
-      errors: [{ message: "something went wrong" }],
-    });
+router.get(
+  "/",
+  (req, res, next) => auth(req, res, next, "profile-get"),
+  async (req, res) => {
+    try {
+      const profiles = await Profile.find();
+      res.json({
+        status: true,
+        data: profiles,
+      });
+    } catch (err) {
+      // console.log(err);
+      res.status(500).json({
+        status: false,
+        errors: [{ message: "something went wrong" }],
+      });
+    }
   }
-});
+);
 module.exports = router;

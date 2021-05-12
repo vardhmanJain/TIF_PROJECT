@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const schoolSchema = mongoose.Schema({
   public_id: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     unique: true,
     default: null,
   },
@@ -27,7 +27,7 @@ const schoolSchema = mongoose.Schema({
   },
   updated: {
     type: Date,
-    default: null,
+    default: Date.now(),
   },
 });
 

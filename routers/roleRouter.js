@@ -18,7 +18,6 @@ router.post(
       await newRole.save();
       res.json({ status: true });
     } catch (err) {
-      console.log(err);
       res.send(500).json({
         status: false,
         errors: [{ message: "something went wrong" }],
@@ -27,49 +26,72 @@ router.post(
   }
 );
 //--------------get all roles-------role-get---
-router.get("/", async (req, res) => {
-  try {
-    const roles = await Role.find();
-    res.json({
-      status: true,
-      data: roles,
-    });
-  } catch (err) {
-    console.log(err);
-    res.send(500).json({
-      status: false,
-      errors: [{ message: "something went wrong" }],
-    });
+router.get(
+  "/",
+  (req, res, next) => auth(req, res, next, "role-get"),
+  async (req, res) => {
+    try {
+      const roles = await Role.find();
+      res.json({
+        status: true,
+        data: roles,
+      });
+    } catch (err) {
+      // console.log(err);
+      res.send(500).json({
+        status: false,
+        errors: [{ message: "something went wrong" }],
+      });
+    }
   }
-});
+);
 //---------------edit a role--------role-edit-----
-router.patch("/:id", auth, async (req, res) => {
-  try {
-    const id = req.params.id;
-    await Role.findByIdAndUpdate(id, { ...req.body });
-    res.json({ status: true });
-  } catch (err) {
-    console.log(err);
-    res.send(500).json({
-      status: false,
-      errors: [{ message: "something went wrong" }],
-    });
+router.patch(
+  "/:id",
+  (req, res, next) => auth(req, res, next, "role-edit"),
+  async (req, res) => {
+    try {
+      const id = req.params.id;
+      const updated = Date.now();
+      const role = await Role.findByIdAndUpdate(
+        id,
+        { ...req.body, updated },
+        { runValidators: true }
+      );
+      if (!role) {
+        return res.status(404).json({
+          status: false,
+          errors: [{ message: "the role does not exist" }],
+        });
+      }
+      res.json({ status: true });
+    } catch (err) {
+      // console.log(err);
+      res.send(500).json({
+        status: false,
+        errors: [{ message: "something went wrong" }],
+      });
+    }
   }
-});
+);
 //-----------------delete a role-------role-remove--------
-router.delete("/:id", auth, async (req, res) => {
-  try {
-    await Role.findByIdAndDelete(req.params.id);
-    res.json({
-      status: true,
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({
-      status: false,
-      errors: [{ message: "something went wrong" }],
-    });
+router.delete(
+  "/:id",
+  (req, res, next) => auth(req, res, next, "role-remove"),
+  async (req, res) => {
+    try {
+      await Role.findByIdAndDelete(req.params.id);
+      res.json({
+        status: true,
+      });
+    } catch (err) {
+      // console.log(err);
+      res.status(500).json({
+        status: false,
+        errors: [{ message: "something went wrong" }],
+      });
+    }
   }
-});
+);
 
 module.exports = router;
