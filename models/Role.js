@@ -1,7 +1,14 @@
 const mongoose = require("mongoose");
+
 const roleSchema = mongoose.Schema({
-  name: String,
-  scopes: [{ type: String }],
+  name: {
+    type: String,
+    required: true,
+  },
+  scopes: {
+    type: [{ type: String }],
+    default: [],
+  },
   created: {
     type: Date,
     default: Date.now(),

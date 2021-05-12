@@ -8,6 +8,10 @@ const profileSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  classroom: {
+    type: String,
+    required: true,
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -16,7 +20,7 @@ const profileSchema = mongoose.Schema({
   schoolId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "School",
-    default: null,
+    required: true,
   },
   created: {
     type: Date,

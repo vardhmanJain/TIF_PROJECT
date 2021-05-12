@@ -1,21 +1,31 @@
 const router = require("express").Router();
 const auth = require("../middleware/auth");
+const { body, validationResult } = require("express-validator");
 const Role = require("../models/Role");
 //-----------create a new role--------
-router.post("/", async (req, res) => {
-  try {
-    const { name, scopes } = req.body;
-    const newRole = new Role({ name, scopes });
-    await newRole.save();
-    res.json({ status: true });
-  } catch (err) {
-    console.log(err);
-    res.send(500).json({
-      status: false,
-      errors: [{ message: "something went wrong" }],
-    });
+router.post(
+  "/",
+  auth,
+  body("name", "name is required").exists(),
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      const { name, scopes } = req.body;
+      const newRole = new Role({ name, scopes });
+      await newRole.save();
+      res.json({ status: true });
+    } catch (err) {
+      console.log(err);
+      res.send(500).json({
+        status: false,
+        errors: [{ message: "something went wrong" }],
+      });
+    }
   }
-});
+);
 //--------------get all roles-------role-get---
 router.get("/", async (req, res) => {
   try {
