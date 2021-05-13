@@ -159,7 +159,9 @@ router.get(
       const users = await User.find({}, "-passwordHash");
       res.json({
         status: true,
-        data: users,
+        content: {
+          data: users,
+        },
       });
     } catch (err) {
       // console.log(err);
@@ -196,7 +198,9 @@ router.get(
       const user = await User.findById(req.params.id, "-passwordHash");
       res.json({
         status: true,
-        data: user,
+        content: {
+          data: user,
+        },
       });
     } catch (err) {
       // console.log(err);

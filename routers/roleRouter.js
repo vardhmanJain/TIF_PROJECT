@@ -34,7 +34,9 @@ router.get(
       const roles = await Role.find();
       res.json({
         status: true,
-        data: roles,
+        content: {
+          data: roles,
+        },
       });
     } catch (err) {
       // console.log(err);

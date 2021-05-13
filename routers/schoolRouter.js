@@ -48,7 +48,9 @@ router.get(
       const schools = await School.find();
       res.json({
         status: true,
-        data: schools,
+        content: {
+          data: schools,
+        },
       });
     } catch (err) {
       // console.log(err);
@@ -96,18 +98,19 @@ router.get(
         "-created",
         "-updated",
       ]);
-      console.log(students);
       res.json({
         status: true,
-        data: {
-          _id: id,
-          public_id,
-          name,
-          city,
-          state,
-          country,
-          // ...school._doc,
-          students,
+        content: {
+          data: {
+            _id: id,
+            public_id,
+            name,
+            city,
+            state,
+            country,
+            // ...school._doc,
+            students,
+          },
         },
       });
     } catch (err) {

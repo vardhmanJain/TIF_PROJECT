@@ -45,7 +45,9 @@ router.get(
       const profiles = await Profile.find();
       res.json({
         status: true,
-        data: profiles,
+        content: {
+          data: profiles,
+        },
       });
     } catch (err) {
       // console.log(err);
