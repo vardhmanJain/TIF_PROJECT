@@ -1,4 +1,7 @@
 # TIF_PROJECT
+### Link to problem statement : https://drive.google.com/file/d/1Na-cfZcj8QOrKLlf5stm5OfEFKrdN8Xd/view
+
+A summary of the problem is given below : 
 You run an EdTech-Management SaaS company. On your platform, Schools are registered, along with their Students.
 
 To restrict access, you use Scope-based system, 
